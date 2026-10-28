@@ -1,39 +1,23 @@
 import type { ValePost, ValeUser } from "./types";
 
 export const demoUsers: ValeUser[] = [
-  { id: "maya", username: "mayamoves", displayName: "Maya Chen", initials: "MC", avatarGradient: "peach", goal: "Performance", mutuals: 12 },
-  { id: "leo", username: "leocooks", displayName: "Leo Martins", initials: "LM", avatarGradient: "forest", goal: "Lean bulk", mutuals: 8 },
-  { id: "nia", username: "nia.nourished", displayName: "Nia Brooks", initials: "NB", avatarGradient: "berry", goal: "Wellness", mutuals: 5 },
-  { id: "ari", username: "ariruns", displayName: "Ari Patel", initials: "AP", avatarGradient: "ocean", goal: "Half marathon", mutuals: 16 },
+  { id: "maya", username: "mayamoves", displayName: "Maya Chen", initials: "MC", avatarGradient: "peach", avatarUrl: "/avatars/maya.png", goal: "Everyday balance", mutuals: 12 },
+  { id: "ryan", username: "ryankohcooks", displayName: "Ryan Koh", initials: "RK", avatarGradient: "forest", avatarUrl: "/avatars/ryan.png", goal: "Meal prep", mutuals: 8 },
+  { id: "nadia", username: "nadia.nourished", displayName: "Nadia Rahman", initials: "NR", avatarGradient: "berry", avatarUrl: "/avatars/nadia.png", goal: "Gentle nutrition", mutuals: 5 },
+  { id: "jules", username: "julesaroundtown", displayName: "Jules Tan", initials: "JT", avatarGradient: "ocean", avatarUrl: "/avatars/jules.png", goal: "Eat out well", mutuals: 16 },
+  { id: "daniel", username: "danielplates", displayName: "Daniel Lim", initials: "DL", avatarGradient: "lime", avatarUrl: "/avatars/daniel.png", goal: "Build consistency", mutuals: 9 },
+  { id: "amara", username: "amarawrites", displayName: "Amara Cole", initials: "AC", avatarGradient: "peach", avatarUrl: "/avatars/amara.png", goal: "Food culture", mutuals: 7 },
 ];
 
 export const demoPosts: ValePost[] = [
-  {
-    id: "post-bowl", user: demoUsers[0], imageUrl: "/meal-images/turmeric-chicken-bowl.jpg",
-    mealName: "Golden chicken power bowl",
-    caption: "Post-lift lunch that actually keeps me going. The lemon tahini is non-negotiable 🍋",
-    calories: 648, protein: 48, carbs: 62, fat: 23, aiEstimated: true,
-    createdAt: "18 min", likes: 284, liked: false, bookmarked: false,
-    comments: [
-      { id: "c1", username: "ariruns", body: "That char on the sweet potato 👌" },
-      { id: "c2", username: "nia.nourished", body: "Saving this for meal prep Sunday." },
-    ],
-  },
-  {
-    id: "post-pasta", user: demoUsers[1], imageUrl: "/meal-images/salmon-basil-rigatoni.jpg",
-    mealName: "Basil rigatoni + salmon",
-    caption: "Thirty-minute dinner, 51g protein. Bright, herby, and exactly what the evening needed.",
-    calories: 712, protein: 51, carbs: 74, fat: 25, aiEstimated: true,
-    createdAt: "1 hr", likes: 431, liked: true, bookmarked: true,
-    comments: [{ id: "c3", username: "mayamoves", body: "Recipe drop please!" }],
-  },
-  {
-    id: "post-oats", user: demoUsers[2], imageUrl: "/meal-images/berry-oats.jpg",
-    mealName: "Berry recovery oats",
-    caption: "Slow morning fuel after an easy 5K. Add a pinch of salt to the almond butter—trust me.",
-    calories: 486, protein: 22, carbs: 68, fat: 17, aiEstimated: true,
-    createdAt: "3 hr", likes: 198, liked: false, bookmarked: false, comments: [],
-  },
+  { id: "post-bibimbap", user: demoUsers[0], imageUrl: "/meal-images/bibimbap.png", mealName: "Brown rice bibimbap, sauce on the side", caption: "Lunch out with the team. I kept everything I love, switched to brown rice, and asked for the sauce separately. Tiny change, still completely satisfying.", calories: 638, protein: 31, carbs: 79, fat: 22, aiEstimated: true, category: "Eating out", createdAt: "18 min", likes: 284, liked: false, bookmarked: false, comments: [{ id: "c1", username: "ryankohcooks", body: "This is the kind of realistic swap I can actually repeat." }, { id: "c2", username: "julesaroundtown", body: "Sauce on the side is elite—more flavour control, zero sadness." }] },
+  { id: "post-baozi", user: demoUsers[3], imageUrl: "/meal-images/baozi-fat-loss.png", mealName: "Foods that look ‘too high-calorie’ but still fit", caption: "Bao gets blamed a lot. One chicken-and-cabbage bun with clear soup and vegetables can be a practical, filling lunch. A fat-loss phase does not need a banned-food list.", calories: 492, protein: 24, carbs: 61, fat: 16, aiEstimated: true, category: "Myth check", readTime: "3 min read", createdAt: "46 min", likes: 176, liked: true, bookmarked: true, comments: [{ id: "c3", username: "mayamoves", body: "Needed this reminder after avoiding bao for months." }] },
+  { id: "post-prep", user: demoUsers[1], imageUrl: "/meal-images/meal-prep.png", mealName: "Sunday prep, without eating the same bowl all week", caption: "Roast vegetables, herby chicken, quinoa, and three different sauces. Same base ingredients, different mood every day.", calories: 584, protein: 46, carbs: 56, fat: 19, aiEstimated: true, category: "Meal prep", createdAt: "1 hr", likes: 231, liked: false, bookmarked: false, comments: [{ id: "c4", username: "nadia.nourished", body: "Batch components > five identical containers." }] },
+  { id: "post-hawker", user: demoUsers[3], imageUrl: "/meal-images/hawker-noodles.png", mealName: "My hawker-centre order when I want something lighter", caption: "Fishball noodles, soup version, extra greens. Not a ‘perfect’ meal—just warm, affordable, and easy to fit into an ordinary workday.", calories: 456, protein: 27, carbs: 62, fat: 11, aiEstimated: true, category: "Hawker notes", createdAt: "2 hr", likes: 198, liked: false, bookmarked: false, comments: [] },
+  { id: "post-mediterranean", user: demoUsers[5], imageUrl: "/meal-images/mediterranean-table.png", mealName: "A Mediterranean table is a pattern, not a prescription", caption: "Beans, fish, vegetables, bread, olive oil—and people lingering at the table. The social part of eating well deserves more credit.", calories: 706, protein: 38, carbs: 68, fat: 31, aiEstimated: true, category: "Food culture", readTime: "5 min read", createdAt: "3 hr", likes: 342, liked: false, bookmarked: true, comments: [{ id: "c5", username: "nadia.nourished", body: "The pattern over perfection—that is the whole point." }] },
+  { id: "post-anti", user: demoUsers[2], imageUrl: "/meal-images/anti-inflammatory.png", mealName: "My low-effort anti-inflammatory pantry map", caption: "Oats, beans, frozen vegetables, eggs, ginger and olive oil. I used the same basics for four different meals—no expensive powders required.", calories: 521, protein: 29, carbs: 57, fat: 20, aiEstimated: true, category: "Dietitian notes", readTime: "6 min read", createdAt: "Yesterday", likes: 417, liked: false, bookmarked: false, comments: [{ id: "c6", username: "ryankohcooks", body: "A shopping list would be amazing." }] },
+  { id: "post-breakfast", user: demoUsers[0], imageUrl: "/meal-images/wholemeal-breakfast.png", mealName: "Wholemeal breakfast jio this Saturday?", caption: "I booked a big table in Tiong Bahru for anyone who wants to swap easy breakfast ideas. Bring a favourite spread—or just come hungry.", calories: 438, protein: 19, carbs: 52, fat: 17, aiEstimated: true, category: "Community jio", createdAt: "Yesterday", likes: 96, liked: false, bookmarked: false, comments: [] },
+  { id: "post-french", user: demoUsers[5], imageUrl: "/meal-images/french-table.png", mealName: "How to order with confidence at a French restaurant", caption: "You do not need perfect French. Understanding the rhythm of the menu—and asking one warm question—goes much further.", calories: 682, protein: 34, carbs: 64, fat: 29, aiEstimated: true, category: "Dining culture", readTime: "5 min read", createdAt: "2 days", likes: 224, liked: false, bookmarked: false, comments: [] },
 ];
 
 export const dailyTrend = [1640, 2030, 1885, 2210, 1970, 1840, 1764];

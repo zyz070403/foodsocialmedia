@@ -11,6 +11,7 @@ export type ValeUser = {
   displayName: string;
   initials: string;
   avatarGradient: string;
+  avatarUrl?: string;
   goal: string;
   mutuals?: number;
 };
@@ -33,4 +34,6 @@ export type ValePost = Nutrition & {
   liked: boolean;
   bookmarked: boolean;
   comments: CommentItem[];
+  category?: string;
+  readTime?: string;
 };
