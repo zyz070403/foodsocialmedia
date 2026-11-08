@@ -4,20 +4,22 @@ import {
   Activity, Award, Bookmark, Bot, Camera, Check, ChefHat, ChevronDown, ChevronRight,
   CircleUserRound, Compass, Dumbbell, Flame, Gauge, Home, ImagePlus, Leaf, LoaderCircle,
   LogOut, MessageCircle, Moon, MoreHorizontal, Pencil, Plus, Search, Send,
-  Settings, Share2, Sparkles, Sun, Target, TrendingUp, Trophy, Utensils, X,
+  Settings, Share2, Sparkles, Sun, Target, TrendingUp, Trophy, Utensils, Users, X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { dailyTrend, demoPosts, demoUsers } from "../lib/demo-data";
 import type { Nutrition, ValePost, ValeUser } from "../lib/types";
 
-type View = "feed" | "explore" | "log" | "progress" | "profile";
+type View = "feed" | "explore" | "circles" | "log" | "progress" | "trophies" | "profile";
 type Viewer = { id: string; name: string; email: string };
 
 const navItems: { id: View; label: string; icon: typeof Home }[] = [
   { id: "feed", label: "Home", icon: Home },
   { id: "explore", label: "Explore", icon: Compass },
+  { id: "circles", label: "Circles", icon: Users },
   { id: "log", label: "Food log", icon: Utensils },
   { id: "progress", label: "Progress", icon: TrendingUp },
+  { id: "trophies", label: "Trophies", icon: Trophy },
   { id: "profile", label: "Profile", icon: CircleUserRound },
 ];
 
@@ -88,10 +90,12 @@ export default function ValeApp({ viewer }: { viewer: Viewer }) {
       <div className="mobile-topbar"><Brand /><div className="mobile-top-actions"><button className="icon-button" aria-label="Toggle theme" onClick={() => setDark(!dark)}>{dark ? <Sun size={19} /> : <Moon size={19} />}</button><button className="avatar avatar-lime" onClick={() => setSettingsOpen(true)}>{currentUser.initials}</button></div></div>
       <main className="main-canvas">
         <TopBar view={view} search={search} setSearch={setSearch} dark={dark} setDark={setDark} onSettings={() => setSettingsOpen(true)} />
-        {view === "feed" && <Feed posts={posts} onAction={socialAction} onComment={comment} onShare={() => notify("Post link copied")} />}
+        {view === "feed" && <Feed posts={posts} onAction={socialAction} onComment={comment} onShare={() => notify("Post link copied")} onOpenCircles={() => setView("circles")} />}
         {view === "explore" && <Explore posts={posts} users={demoUsers} search={search} following={following} setFollowing={setFollowing} onOpenPost={() => setView("feed")} />}
+        {view === "circles" && <Circles notify={notify} />}
         {view === "log" && <FoodLog posts={loggedMeals} onBrowse={() => setView("feed")} />}
-        {view === "progress" && <Progress />}
+        {view === "progress" && <Progress onShare={() => notify("Progress card copied and ready to share")} />}
+        {view === "trophies" && <Trophies notify={notify} />}
         {view === "profile" && <Profile user={currentUser} posts={posts.filter((post) => post.user.id === viewer.id)} onCreate={() => setCreateOpen(true)} />}
       </main>
       <RightRail loggedMeals={loggedMeals} following={following} setFollowing={setFollowing} notify={notify} />
@@ -112,11 +116,11 @@ function DesktopSidebar({ view, onView, onCreate, currentUser }: { view: View; o
 }
 
 function TopBar({ view, search, setSearch, dark, setDark, onSettings }: { view: View; search: string; setSearch: (s: string) => void; dark: boolean; setDark: (d: boolean) => void; onSettings: () => void }) {
-  const titles: Record<View, [string, string]> = { feed: ["Good evening", "See what’s cooking in your circle."], explore: ["Explore", "Fresh ideas and people worth following."], log: ["Today’s fuel", "A simple view of what’s helping you move."], progress: ["Your progress", "Trends, consistency, and wins—without the noise."], profile: ["Your space", "Meals, milestones, and the story you’re building."] };
+  const titles: Record<View, [string, string]> = { feed: ["Good evening", "See what’s cooking in your circle."], explore: ["Explore", "Fresh ideas and people worth following."], circles: ["Your circles", "Small groups, shared momentum, real food."], log: ["Today’s fuel", "A simple view of what’s helping you move."], progress: ["Your progress", "Trends, consistency, and wins—without the noise."], trophies: ["Your trophy shelf", "Everyday habits, made worth celebrating."], profile: ["Your space", "Meals, milestones, and the story you’re building."] };
   return <header className="content-header"><div><p className="eyebrow">Sunday, 25 October</p><h1>{titles[view][0]}</h1><p>{titles[view][1]}</p></div><div className="header-actions"><label className="search-field"><Search size={17} /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search meals, people…" /></label><button className="icon-button desktop-only" onClick={() => setDark(!dark)} aria-label="Toggle theme">{dark ? <Sun size={19} /> : <Moon size={19} />}</button><button className="icon-button desktop-only" onClick={onSettings} aria-label="Settings"><Settings size={19} /></button></div></header>;
 }
 
-function Feed({ posts, onAction, onComment, onShare }: { posts: ValePost[]; onAction: (id: string, action: "like" | "bookmark" | "log", post?: ValePost) => void; onComment: (id: string, body: string) => void; onShare: () => void }) {
+function Feed({ posts, onAction, onComment, onShare, onOpenCircles }: { posts: ValePost[]; onAction: (id: string, action: "like" | "bookmark" | "log", post?: ValePost) => void; onComment: (id: string, body: string) => void; onShare: () => void; onOpenCircles: () => void }) {
   return <div className="feed-column">
     <section className="fuel-ribbon">
       <span className="fuel-icon"><Gauge size={21} /></span>
@@ -124,6 +128,11 @@ function Feed({ posts, onAction, onComment, onShare }: { posts: ValePost[]; onAc
       <div className="fuel-macro"><i className="protein" /><span><b>78</b>/140g P</span></div>
       <div className="fuel-macro"><i className="carbs" /><span><b>126</b>/260g C</span></div>
       <div className="fuel-macro"><i className="fat" /><span><b>42</b>/73g F</span></div>
+    </section>
+    <section className="momentum-strip">
+      <div className="momentum-streak"><span><Flame size={18} fill="currentColor" /></span><div><small>YOUR RUN</small><strong>12 days strong</strong></div></div>
+      <div className="momentum-challenge"><div><small>ACTIVE CHALLENGE</small><strong>Wholegrain switch</strong></div><span><i style={{ width: "71%" }} /></span><b>5/7</b></div>
+      <button onClick={onOpenCircles}>Open circles <ChevronRight size={16} /></button>
     </section>
     <Stories />
     <div className="feed-filter"><div><button className="active">My circle</button><button>Kitchen lab</button></div><button className="filter-button"><span className="load-dots"><i /><i /><i /></span> Meal load <ChevronDown size={14} /></button></div>
@@ -154,6 +163,27 @@ function Explore({ posts, users, search, following, setFollowing, onOpenPost }: 
   return <div className="page-stack"><section className="discover-hero"><div><span className="eyebrow">Community pulse</span><h2>Eat well, together.</h2><p>Discover meals from people with goals like yours.</p></div><div className="pulse-stat"><strong>12.8k</strong><span>meals shared this week</span></div></section><section><div className="section-heading"><div><p className="eyebrow">People</p><h2>Find your circle</h2></div><button>See all <ChevronRight size={16} /></button></div><div className="people-row">{users.filter((u) => `${u.displayName} ${u.username}`.toLowerCase().includes(query)).map((user) => <div className="person-card" key={user.id}><span className={`avatar avatar-${user.avatarGradient}`}>{user.initials}</span><strong>{user.displayName}</strong><span>@{user.username}</span><small>{user.mutuals} mutuals · {user.goal}</small><button className={following.has(user.id) ? "following" : ""} onClick={() => toggle(user.id)}>{following.has(user.id) ? <><Check size={14} /> Following</> : <><Plus size={14} /> Follow</>}</button></div>)}</div></section><section><div className="section-heading"><div><p className="eyebrow">Trending plates</p><h2>Made to inspire</h2></div></div>{filteredPosts.length ? <div className="explore-grid">{filteredPosts.map((post) => { const load = mealLoad(post.calories); return <button key={post.id} className="explore-tile" onClick={onOpenPost}><img src={post.imageUrl} alt={post.mealName} /><span className={`tile-macros load-${load.tone}`}><i /> <strong>{post.calories}</strong> kcal</span><span className="tile-caption"><strong>{post.mealName}</strong><small>@{post.user.username}</small></span></button>; })}</div> : <EmptyState icon={Search} title="No meals found" copy="Try a broader ingredient or creator name." />}</section></div>;
 }
 
+const circleData = [
+  { id: "lunch", emoji: "🥗", name: "Lunch Break Club", members: "1.8k", copy: "Fast, balanced lunches for busy weekdays.", activity: "42 new plates today", tone: "green" },
+  { id: "prep", emoji: "🍱", name: "Sunday Preppers", members: "934", copy: "Prep once, eat brilliantly all week.", activity: "Next prep-along · 6:00 PM", tone: "gold" },
+  { id: "lift", emoji: "🏋️", name: "Fuel the Lift", members: "2.4k", copy: "Protein-forward meals without the bro-science.", activity: "18 check-ins this hour", tone: "berry" },
+];
+
+function Circles({ notify }: { notify: (message: string) => void }) {
+  const [joined, setJoined] = useState(() => new Set(["lunch"]));
+  const [selected, setSelected] = useState("lunch");
+  const [checkedIn, setCheckedIn] = useState(false);
+  const active = circleData.find((circle) => circle.id === selected) ?? circleData[0];
+  const toggleJoin = (id: string) => setJoined((current) => { const next = new Set(current); next.has(id) ? next.delete(id) : next.add(id); notify(next.has(id) ? "Welcome to the circle" : "You left the circle"); return next; });
+  const checkIn = () => { setCheckedIn(true); notify("Day 6 complete — your circle can cheer you on"); };
+  return <div className="page-stack circles-page">
+    <section className="circles-hero"><div><span className="eyebrow">BETTER TOGETHER</span><h2>Find your people.<br/><em>Keep your rhythm.</em></h2><p>Small, focused communities for real-life food and fitness goals.</p></div><div className="circle-orbit" aria-hidden="true"><span>🥑</span><span>🍜</span><span>💪</span><strong>VALE</strong></div></section>
+    <section><div className="section-heading"><div><p className="eyebrow">Your communities</p><h2>Circles</h2></div><button onClick={() => notify("Circle discovery opened")}>Discover more <ChevronRight size={16} /></button></div><div className="circle-grid">{circleData.map((circle) => <article key={circle.id} className={`circle-card circle-${circle.tone} ${selected === circle.id ? "selected" : ""}`} onClick={() => setSelected(circle.id)}><span className="circle-emoji">{circle.emoji}</span><div><small>{circle.members} members</small><h3>{circle.name}</h3><p>{circle.copy}</p><span className="circle-activity"><i /> {circle.activity}</span></div><button onClick={(event) => { event.stopPropagation(); toggleJoin(circle.id); }} className={joined.has(circle.id) ? "joined" : ""}>{joined.has(circle.id) ? <><Check size={14} /> Joined</> : <><Plus size={14} /> Join</>}</button></article>)}</div></section>
+    <section className="circle-room"><header><div><span className={`circle-emoji room-${active.tone}`}>{active.emoji}</span><div><p className="eyebrow">LIVE CIRCLE</p><h2>{active.name}</h2></div></div><button onClick={() => notify("Circle chat is ready")}>Open chat <MessageCircle size={16} /></button></header><div className="circle-room-grid"><div className="circle-prompt"><span>Today’s table question</span><h3>What’s one meal you can make on autopilot?</h3><p>Share the dependable plate that keeps your goals moving when life gets busy.</p><button onClick={() => notify("Post composer opened for your circle")}><Camera size={16} /> Share your plate</button></div><div className="member-pulse"><span className="avatar-stack">{demoUsers.slice(0,4).map((user) => <i key={user.id} className={`avatar avatar-${user.avatarGradient}`}>{user.initials}</i>)}</span><strong>128 members checked in today</strong><p>Your next shared milestone unlocks at 150.</p><span className="pulse-bar"><i style={{ width: "85%" }} /></span></div></div></section>
+    <section className="challenge-feature"><div className="challenge-medal"><Trophy size={32} /></div><div><p className="eyebrow">CIRCLE CHALLENGE · 2 DAYS LEFT</p><h2>Wholegrain switch</h2><p>Choose one wholegrain swap each day and share the plate with your circle.</p></div><div className="challenge-days">{["M","T","W","T","F","S","S"].map((day, index) => <span key={`${day}-${index}`} className={index < 5 || checkedIn ? "done" : index === 5 ? "today" : ""}>{index < 5 || checkedIn ? <Check size={14} /> : day}</span>)}</div><button className="primary-button" onClick={checkIn} disabled={checkedIn}>{checkedIn ? <><Check size={16} /> Checked in</> : "Check in today"}</button></section>
+  </div>;
+}
+
 function FoodLog({ posts, onBrowse }: { posts: ValePost[]; onBrowse: () => void }) {
   const totals = posts.reduce((sum, post) => ({ calories: sum.calories + post.calories, protein: sum.protein + post.protein, carbs: sum.carbs + post.carbs, fat: sum.fat + post.fat }), { calories: 1160, protein: 78, carbs: 126, fat: 42 });
   return <div className="page-stack"><section className="summary-card"><div className="calorie-ring large" style={{ "--progress": `${Math.min(100, totals.calories / 22)}%` } as React.CSSProperties}><span><strong>{totals.calories.toLocaleString()}</strong><small>of 2,200 kcal</small></span></div><div className="summary-copy"><span className="status-pill"><span /> On track</span><h2>{Math.max(0, 2200 - totals.calories)} calories left</h2><p>Your targets flex with your maintenance goal and recent activity.</p><div className="macro-bars"><MacroBar label="Protein" value={totals.protein} target={140} tone="green" /><MacroBar label="Carbs" value={totals.carbs} target={260} tone="gold" /><MacroBar label="Fat" value={totals.fat} target={73} tone="pink" /></div></div></section><section><div className="section-heading"><div><p className="eyebrow">Sunday, 25 October</p><h2>Meals</h2></div><button className="secondary-button" onClick={onBrowse}><Plus size={16} /> From feed</button></div><div className="meal-list"><MealRow time="8:10" name="Greek yoghurt, berries & honey" calories={380} /><MealRow time="12:45" name="Turkey avocado sourdough" calories={542} /><MealRow time="16:20" name="Flat white & banana" calories={238} />{posts.map((post) => <MealRow key={post.id} time="Now" name={post.mealName} calories={post.calories} image={post.imageUrl} />)}</div></section></div>;
@@ -162,7 +192,7 @@ function FoodLog({ posts, onBrowse }: { posts: ValePost[]; onBrowse: () => void 
 function MacroBar({ label, value, target, tone }: { label: string; value: number; target: number; tone: string }) { return <div><p><span>{label}</span><strong>{value}g <small>/ {target}g</small></strong></p><span className="bar"><i className={`bar-${tone}`} style={{ width: `${Math.min(100, value / target * 100)}%` }} /></span></div>; }
 function MealRow({ time, name, calories, image }: { time: string; name: string; calories: number; image?: string }) { return <div className="meal-row"><span className="meal-time">{time}</span>{image ? <img src={image} alt="" /> : <span className="meal-icon"><Utensils size={18} /></span>}<div><strong>{name}</strong><span>Estimated nutrition · Editable</span></div><b>{calories} kcal</b><button className="icon-button ghost"><MoreHorizontal size={18} /></button></div>; }
 
-function Progress() {
+function Progress({ onShare }: { onShare: () => void }) {
   const [range, setRange] = useState("7D"); const points = dailyTrend.map((value, i) => `${i * 16.66},${88 - ((value - 1400) / 1000) * 68}`).join(" ");
   return <div className="page-stack">
     <div className="stat-grid"><StatCard icon={Flame} value="12" label="day streak" note="Personal best: 19" tone="lime" /><StatCard icon={Target} value="86%" label="goal consistency" note="+8% this month" tone="rose" /><StatCard icon={Dumbbell} value="7.4k" label="avg. daily steps" note="Health sync soon" tone="blue" /></div>
@@ -176,7 +206,7 @@ function Progress() {
         <MacroGoalDial label="Fat" value={68} target={73} tone="fat" />
       </div>
     </section>
-    <section><div className="section-heading"><div><p className="eyebrow">Recently earned</p><h2>Milestones</h2></div><button><Share2 size={15} /> Share progress</button></div><div className="achievement-row"><Achievement icon={Flame} title="10-day flame" copy="Tracked consistently for ten days" /><Achievement icon={Utensils} title="Home cook" copy="Shared 25 homemade meals" /><Achievement icon={Award} title="Protein pro" copy="Hit your protein target 7×" /></div></section>
+    <section><div className="section-heading"><div><p className="eyebrow">Recently earned</p><h2>Milestones</h2></div><button onClick={onShare}><Share2 size={15} /> Share progress</button></div><div className="achievement-row"><Achievement icon={Flame} title="10-day flame" copy="Tracked consistently for ten days" /><Achievement icon={Utensils} title="Home cook" copy="Shared 25 homemade meals" /><Achievement icon={Award} title="Protein pro" copy="Hit your protein target 7×" /></div></section>
   </div>;
 }
 
@@ -186,6 +216,18 @@ function MacroGoalDial({ label, value, target, tone }: { label: string; value: n
 }
 function StatCard({ icon: Icon, value, label, note, tone }: { icon: typeof Flame; value: string; label: string; note: string; tone: string }) { return <div className={`stat-card tone-${tone}`}><span><Icon size={20} /></span><strong>{value}</strong><p>{label}</p><small>{note}</small></div>; }
 function Achievement({ icon: Icon, title, copy }: { icon: typeof Flame; title: string; copy: string }) { return <div className="achievement"><span><Icon size={24} /></span><div><strong>{title}</strong><p>{copy}</p></div><ChevronRight size={18} /></div>; }
+
+function Trophies({ notify }: { notify: (message: string) => void }) {
+  const trophies = [
+    { icon: Flame, title: "12-day rhythm", copy: "Logged meals for 12 days straight", earned: true, tone: "orange" },
+    { icon: Utensils, title: "Home cook", copy: "Shared 25 homemade meals", earned: true, tone: "green" },
+    { icon: Award, title: "Protein pro", copy: "Hit your protein goal seven times", earned: true, tone: "rose" },
+    { icon: Users, title: "Circle starter", copy: "Cheer on 20 community check-ins", earned: false, tone: "blue" },
+    { icon: Leaf, title: "Plant power", copy: "Add 30 different plants this week", earned: false, tone: "lime" },
+    { icon: Trophy, title: "Challenge finisher", copy: "Complete your first 7-day challenge", earned: false, tone: "gold" },
+  ];
+  return <div className="page-stack trophy-page"><section className="trophy-hero"><div><p className="eyebrow">LEVEL 04 · STEADY BUILDER</p><h2>Consistency looks<br/><em>good on you.</em></h2><p>1,840 points · 160 until your next level</p><span className="level-bar"><i style={{ width: "72%" }} /></span><button onClick={() => notify("Trophy shelf copied and ready to share")}><Share2 size={16} /> Share your shelf</button></div><div className="hero-trophy"><span><Trophy size={54} /></span><i>04</i></div></section><section><div className="section-heading"><div><p className="eyebrow">Your collection</p><h2>6 milestones in reach</h2></div><span className="collection-count"><strong>3</strong> earned</span></div><div className="trophy-grid">{trophies.map(({ icon: Icon, title, copy, earned, tone }) => <article key={title} className={`trophy-card trophy-${tone} ${earned ? "earned" : "locked"}`}><span className="trophy-icon"><Icon size={28} /></span><div><small>{earned ? "EARNED" : "IN PROGRESS"}</small><h3>{title}</h3><p>{copy}</p></div>{earned ? <button onClick={() => notify(`${title} card ready to share`)} aria-label={`Share ${title}`}><Share2 size={16} /></button> : <span className="mini-progress"><i style={{ width: title === "Circle starter" ? "70%" : title === "Plant power" ? "63%" : "71%" }} /></span>}</article>)}</div></section><section className="next-reward"><span><Sparkles size={22} /></span><div><p className="eyebrow">NEXT UP</p><h3>Complete today’s Wholegrain switch check-in</h3><p>+120 points and your first community challenge trophy.</p></div><button onClick={() => notify("Taking you to today’s challenge")}>View challenge <ChevronRight size={16} /></button></section></div>;
+}
 
 function Profile({ user, posts, onCreate }: { user: ValeUser; posts: ValePost[]; onCreate: () => void }) { return <div className="page-stack"><section className="profile-hero"><div className="profile-cover"><span>Small choices.<br/><em>Strong days.</em></span></div><div className="profile-details"><span className={`avatar avatar-${user.avatarGradient}`}>{user.initials}</span><button className="secondary-button"><Pencil size={15} /> Edit profile</button><h2>{user.displayName}</h2><p>@{user.username}</p><p className="bio">Finding the sweet spot between good food, strong lifts, and a life well lived.</p><div className="profile-counts"><span><strong>28</strong> posts</span><span><strong>642</strong> followers</span><span><strong>388</strong> following</span></div></div></section><div className="profile-tabs"><button className="active">Posts</button><button>Saved</button><button>Milestones</button></div>{posts.length ? <div className="explore-grid">{posts.map((post) => <div className="explore-tile" key={post.id}><img src={post.imageUrl} alt={post.mealName} /></div>)}</div> : <EmptyState icon={Camera} title="Your first plate belongs here" copy="Share something delicious and let VALE estimate the nutrition." action="Create a post" onAction={onCreate} />}</div>; }
 
@@ -210,5 +252,13 @@ function AssistantDrawer({ onClose }: { onClose: () => void }) {
 
 function SettingsModal({ dark, setDark, viewer, onClose, notify }: { dark: boolean; setDark: (v: boolean) => void; viewer: Viewer; onClose: () => void; notify: (s: string) => void }) { return <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}><div className="modal settings-modal"><header><div><span className="eyebrow">ACCOUNT</span><h2>Settings & privacy</h2></div><button className="icon-button" onClick={onClose}><X size={20} /></button></header><div className="settings-user"><span className="avatar avatar-lime">{viewer.name.slice(0,2).toUpperCase()}</span><div><strong>{viewer.name}</strong><span>{viewer.email}</span></div></div><div className="settings-list"><button onClick={() => setDark(!dark)}><span>{dark ? <Moon /> : <Sun />}</span><div><strong>Appearance</strong><small>{dark ? "Dark mode" : "Light mode"}</small></div><ChevronRight /></button><button onClick={() => notify("Nutrition remains private by default")}><span><Target /></span><div><strong>Nutrition privacy</strong><small>Only you can see daily totals</small></div><ChevronRight /></button><button onClick={() => notify("Health connections are coming soon")}><span><Activity /></span><div><strong>Health connections</strong><small>Apple Health & Health Connect soon</small></div><ChevronRight /></button></div><a href="/signout-with-chatgpt?return_to=/" target="_top" className="signout"><LogOut size={17} /> Sign out</a></div></div>; }
 
-function MobileNav({ view, onView, onCreate }: { view: View; onView: (v: View) => void; onCreate: () => void }) { return <nav className="mobile-nav">{navItems.slice(0,2).map((item) => <button key={item.id} className={view === item.id ? "active" : ""} onClick={() => onView(item.id)}><item.icon /><span>{item.label}</span></button>)}<button className="mobile-create" onClick={onCreate}><Plus /></button>{navItems.slice(2,4).map((item) => <button key={item.id} className={view === item.id ? "active" : ""} onClick={() => onView(item.id)}><item.icon /><span>{item.label}</span></button>)}</nav>; }
+function MobileNav({ view, onView, onCreate }: { view: View; onView: (v: View) => void; onCreate: () => void }) {
+  const mobileItems: { id: View; label: string; icon: typeof Home }[] = [
+    { id: "feed", label: "Home", icon: Home },
+    { id: "circles", label: "Circles", icon: Users },
+    { id: "log", label: "Food log", icon: Utensils },
+    { id: "progress", label: "Progress", icon: TrendingUp },
+  ];
+  return <nav className="mobile-nav">{mobileItems.slice(0,2).map((item) => <button key={item.id} className={view === item.id ? "active" : ""} onClick={() => onView(item.id)}><item.icon /><span>{item.label}</span></button>)}<button className="mobile-create" onClick={onCreate}><Plus /></button>{mobileItems.slice(2).map((item) => <button key={item.id} className={view === item.id ? "active" : ""} onClick={() => onView(item.id)}><item.icon /><span>{item.label}</span></button>)}</nav>;
+}
 function EmptyState({ icon: Icon, title, copy, action, onAction }: { icon: typeof Search; title: string; copy: string; action?: string; onAction?: () => void }) { return <div className="empty-state"><span><Icon size={26} /></span><h3>{title}</h3><p>{copy}</p>{action && <button className="primary-button" onClick={onAction}>{action}</button>}</div>; }
