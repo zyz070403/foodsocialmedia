@@ -155,10 +155,11 @@ button.avatar { cursor: pointer; }
 .post-actions { display: flex; align-items: center; gap: 15px; margin-bottom: 12px; }
 .post-actions button { border: 0; background: transparent; padding: 3px; display: flex; align-items: center; gap: 5px; cursor: pointer; }
 .post-actions button span { font-size: 12px; font-weight: 700; }
-.post-actions .kudos { position: relative; color: var(--muted); }
-.post-actions .kudos em { font-style: normal; font-size: 10px; font-weight: 760; }
-.post-actions .kudos.liked { color: #bc782b; }
-.post-actions .kudos.liked svg { filter: drop-shadow(0 2px 4px rgba(188,120,43,.24)); }
+.post-actions .like-action { position: relative; color: var(--muted); }
+.post-actions .like-action em { font-style: normal; font-size: 10px; font-weight: 760; }
+.post-actions .like-action.liked { color: #df526f; }
+.post-actions .like-action.liked svg { filter: drop-shadow(0 3px 5px rgba(223,82,111,.28)); animation: heart-pop .36s cubic-bezier(.2,.9,.25,1.25); }
+@keyframes heart-pop { 0% { transform: scale(.72); } 55% { transform: scale(1.28) rotate(-7deg); } 100% { transform: scale(1); } }
 .post-actions .bookmark { margin-left: 0; }
 .post-actions .saved { color: var(--lime-deep); }
 .post-actions .log-meal { margin-left: auto; padding: 7px 10px; background: color-mix(in srgb, var(--lime) 34%, var(--surface)); color: var(--ink); border-radius: 8px; font-size: 11px; font-weight: 750; }
@@ -430,7 +431,7 @@ button.avatar { cursor: pointer; }
   .brand-word { font-size: 21px; }
   .stories { gap: 10px; }
   .goal-tag { display: none; }
-  .post-actions { gap: 11px; }.post-actions .kudos em { display: none; }.post-actions .log-meal { font-size: 0; }.post-actions .log-meal svg { width: 17px; }
+  .post-actions { gap: 11px; }.post-actions .like-action em { display: none; }.post-actions .log-meal { font-size: 0; }.post-actions .log-meal svg { width: 17px; }
   .nutrition-popover { top: 95px; }
   .discover-hero { min-height: 180px; padding: 21px; align-items: flex-start; flex-direction: column; }.discover-hero h2 { font-size: 31px; }.pulse-stat { text-align: left; }
   .momentum-strip { gap: 9px; padding: 11px; }.momentum-strip > button { font-size: 0; }.momentum-strip > button svg { width: 18px; }.circles-hero, .trophy-hero { min-height: 220px; padding: 23px; }.circles-hero h2, .trophy-hero h2 { font-size: 30px; }.circle-orbit, .hero-trophy { display: none; }.circle-card { grid-template-columns: 45px 1fr; }.circle-card > button { grid-column: 1 / -1; width: 100%; }.circle-room { padding: 16px; }.circle-room > header button { font-size: 0; }.circle-room > header button svg { width: 18px; }.challenge-feature { padding: 17px; gap: 12px; }.challenge-days { justify-content: space-between; }.challenge-days span { width: 30px; height: 30px; }.trophy-hero .level-bar { width: 100%; }.trophy-card { grid-template-columns: 43px 1fr 25px; padding: 14px; }.next-reward { grid-template-columns: 43px 1fr; }.next-reward button { grid-column: 1 / -1; justify-content: center; padding-top: 8px; }
