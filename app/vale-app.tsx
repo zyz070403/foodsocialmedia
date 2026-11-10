@@ -12,6 +12,7 @@ import type { Nutrition, ValePost, ValeUser } from "../lib/types";
 
 type View = "feed" | "explore" | "circles" | "log" | "progress" | "trophies" | "profile";
 type Viewer = { id: string; name: string; email: string };
+type GoalProfile = { goal: string; support: string[]; activity: string; diets: string[] };
 
 const navItems: { id: View; label: string; icon: typeof Home }[] = [
   { id: "feed", label: "Home", icon: Home },
@@ -29,6 +30,8 @@ export default function ValeApp({ viewer }: { viewer: Viewer }) {
   const [createOpen, setCreateOpen] = useState(false);
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const [goalProfile, setGoalProfile] = useState<GoalProfile | null>(null);
   const [dark, setDark] = useState(false);
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState("");
@@ -44,6 +47,14 @@ export default function ValeApp({ viewer }: { viewer: Viewer }) {
   useEffect(() => {
     document.documentElement.dataset.theme = dark ? "dark" : "light";
   }, [dark]);
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("vale:goal-profile:v1");
+      if (saved) setGoalProfile(JSON.parse(saved));
+      else setOnboardingOpen(true);
+    } catch { setOnboardingOpen(true); }
+  }, []);
 
   const notify = (message: string) => {
     setToast(message);
@@ -78,10 +89,17 @@ export default function ValeApp({ viewer }: { viewer: Viewer }) {
     notify("Your meal is live");
   };
 
+  const saveGoals = (profile: GoalProfile) => {
+    setGoalProfile(profile);
+    window.localStorage.setItem("vale:goal-profile:v1", JSON.stringify(profile));
+    setOnboardingOpen(false);
+    notify("Your goals have been saved privately");
+  };
+
   const currentUser: ValeUser = {
     id: viewer.id, username: viewer.email.split("@")[0], displayName: viewer.name,
     initials: viewer.name.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase(),
-    avatarGradient: "lime", goal: "Build consistency",
+    avatarGradient: "lime", goal: goalOptions.find((option) => option.id === goalProfile?.goal)?.label ?? "Build consistency",
   };
 
   return (
@@ -103,7 +121,8 @@ export default function ValeApp({ viewer }: { viewer: Viewer }) {
       <MobileNav view={view} onView={setView} onCreate={() => setCreateOpen(true)} />
       {createOpen && <CreatePostModal viewer={currentUser} onClose={() => setCreateOpen(false)} onCreated={addCreatedPost} />}
       {assistantOpen && <AssistantDrawer onClose={() => setAssistantOpen(false)} />}
-      {settingsOpen && <SettingsModal dark={dark} setDark={setDark} viewer={viewer} onClose={() => setSettingsOpen(false)} notify={notify} />}
+      {settingsOpen && <SettingsModal dark={dark} setDark={setDark} viewer={viewer} onClose={() => setSettingsOpen(false)} notify={notify} onGoals={() => { setSettingsOpen(false); setOnboardingOpen(true); }} />}
+      {onboardingOpen && <GoalOnboarding initial={goalProfile} onSave={saveGoals} onClose={goalProfile ? () => setOnboardingOpen(false) : undefined} />}
       {toast && <div className="toast"><Check size={16} />{toast}</div>}
     </div>
   );
@@ -286,7 +305,49 @@ function AssistantDrawer({ onClose }: { onClose: () => void }) {
   return <div className="drawer-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}><aside className="assistant-drawer"><header><span className="ai-avatar"><Sparkles size={20} /></span><div><strong>Vale AI</strong><small><i /> Ready to help</small></div><button className="icon-button" onClick={onClose}><X size={20} /></button></header><div className="assistant-intro"><span><Bot size={25} /></span><h2>Food clarity, not food rules.</h2><p>Ask about a meal, your daily targets, or what to cook next.</p></div><div className="chat-messages">{messages.map((message, i) => <div key={i} className={`chat ${message.from}`}>{message.text}</div>)}</div><div className="quick-prompts"><button onClick={() => setInput("What should I eat after my run?")}>Post-run meal?</button><button onClick={() => setInput("Am I getting enough protein?")}>Protein check</button></div><form onSubmit={send}><input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Ask Vale anything…" /><button><Send size={18} /></button></form><small className="assistant-note">Guidance only—not medical advice.</small></aside></div>;
 }
 
-function SettingsModal({ dark, setDark, viewer, onClose, notify }: { dark: boolean; setDark: (v: boolean) => void; viewer: Viewer; onClose: () => void; notify: (s: string) => void }) { return <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}><div className="modal settings-modal"><header><div><span className="eyebrow">ACCOUNT</span><h2>Settings & privacy</h2></div><button className="icon-button" onClick={onClose}><X size={20} /></button></header><div className="settings-user"><span className="avatar avatar-lime">{viewer.name.slice(0,2).toUpperCase()}</span><div><strong>{viewer.name}</strong><span>{viewer.email}</span></div></div><div className="settings-list"><button onClick={() => setDark(!dark)}><span>{dark ? <Moon /> : <Sun />}</span><div><strong>Appearance</strong><small>{dark ? "Dark mode" : "Light mode"}</small></div><ChevronRight /></button><button onClick={() => notify("Nutrition remains private by default")}><span><Target /></span><div><strong>Nutrition privacy</strong><small>Only you can see daily totals</small></div><ChevronRight /></button><button onClick={() => notify("Health connections are coming soon")}><span><Activity /></span><div><strong>Health connections</strong><small>Apple Health & Health Connect soon</small></div><ChevronRight /></button></div><a href="/signout-with-chatgpt?return_to=/" target="_top" className="signout"><LogOut size={17} /> Sign out</a></div></div>; }
+function SettingsModal({ dark, setDark, viewer, onClose, notify, onGoals }: { dark: boolean; setDark: (v: boolean) => void; viewer: Viewer; onClose: () => void; notify: (s: string) => void; onGoals: () => void }) { return <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}><div className="modal settings-modal"><header><div><span className="eyebrow">ACCOUNT</span><h2>Settings & privacy</h2></div><button className="icon-button" onClick={onClose}><X size={20} /></button></header><div className="settings-user"><span className="avatar avatar-lime">{viewer.name.slice(0,2).toUpperCase()}</span><div><strong>{viewer.name}</strong><span>{viewer.email}</span></div></div><div className="settings-list"><button onClick={onGoals}><span><Target /></span><div><strong>Goals & personalisation</strong><small>Review what VALE is helping you achieve</small></div><ChevronRight /></button><button onClick={() => setDark(!dark)}><span>{dark ? <Moon /> : <Sun />}</span><div><strong>Appearance</strong><small>{dark ? "Dark mode" : "Light mode"}</small></div><ChevronRight /></button><button onClick={() => notify("Nutrition remains private by default")}><span><Lock /></span><div><strong>Nutrition privacy</strong><small>Only you can see daily totals</small></div><ChevronRight /></button><button onClick={() => notify("Health connections are coming soon")}><span><Activity /></span><div><strong>Health connections</strong><small>Apple Health & Health Connect soon</small></div><ChevronRight /></button></div><a href="/signout-with-chatgpt?return_to=/" target="_top" className="signout"><LogOut size={17} /> Sign out</a></div></div>; }
+
+const goalOptions = [
+  { id: "cut", label: "Lose body fat", copy: "A sustainable calorie deficit with strength and energy in view.", icon: Target },
+  { id: "build", label: "Build muscle", copy: "Fuel training, recovery, and consistent protein intake.", icon: Dumbbell },
+  { id: "maintain", label: "Maintain & perform", copy: "Hold steady while supporting an active lifestyle.", icon: Gauge },
+  { id: "wellbeing", label: "Feel healthier", copy: "Build balanced habits without focusing on the scale.", icon: Heart },
+];
+const supportOptions = [
+  { id: "nutrition", label: "Calories & macros", icon: Gauge },
+  { id: "ideas", label: "Meal inspiration", icon: Utensils },
+  { id: "community", label: "Community accountability", icon: Users },
+  { id: "insights", label: "AI food insights", icon: Sparkles },
+];
+const goalPlans: Record<string, { calories: string; protein: string; rhythm: string }> = {
+  cut: { calories: "1,950", protein: "145g", rhythm: "Steady deficit" },
+  build: { calories: "2,550", protein: "160g", rhythm: "Performance surplus" },
+  maintain: { calories: "2,200", protein: "140g", rhythm: "Balanced maintenance" },
+  wellbeing: { calories: "Flexible", protein: "125g", rhythm: "Habit-led wellbeing" },
+};
+
+function GoalOnboarding({ initial, onSave, onClose }: { initial: GoalProfile | null; onSave: (profile: GoalProfile) => void; onClose?: () => void }) {
+  const [step, setStep] = useState(0);
+  const [goal, setGoal] = useState(initial?.goal ?? "");
+  const [support, setSupport] = useState<string[]>(initial?.support ?? []);
+  const [activity, setActivity] = useState(initial?.activity ?? "moderate");
+  const [diets, setDiets] = useState<string[]>(initial?.diets ?? []);
+  const profile = { goal, support, activity, diets };
+  const selectedGoal = goalOptions.find((option) => option.id === goal);
+  const plan = goalPlans[goal] ?? goalPlans.maintain;
+  const canContinue = step === 0 ? Boolean(goal) : step === 1 ? support.length > 0 : true;
+  const toggle = (value: string, values: string[], update: (next: string[]) => void) => update(values.includes(value) ? values.filter((item) => item !== value) : [...values, value]);
+  return <div className="onboarding-backdrop"><section className="onboarding-card" role="dialog" aria-modal="true" aria-label="Personalise VALE">
+    <header><Brand /><div className="onboarding-progress" aria-label={`Step ${step + 1} of 4`}>{[0,1,2,3].map((index) => <i key={index} className={index <= step ? "active" : ""} />)}</div>{onClose ? <button className="icon-button" onClick={onClose} aria-label="Close onboarding"><X size={19} /></button> : <span />}</header>
+    <div className="onboarding-body">
+      {step === 0 && <><p className="eyebrow">YOUR DIRECTION</p><h1>What would you most like to achieve?</h1><p className="onboarding-lead">Choose one primary goal. You can change it whenever life changes.</p><div className="goal-choice-grid">{goalOptions.map(({ id, label, copy, icon: Icon }) => <button key={id} className={goal === id ? "selected" : ""} onClick={() => setGoal(id)}><span><Icon size={21} /></span><strong>{label}</strong><small>{copy}</small>{goal === id && <Check size={17} />}</button>)}</div></>}
+      {step === 1 && <><p className="eyebrow">YOUR SUPPORT</p><h1>What should VALE help with?</h1><p className="onboarding-lead">Pick every area that matters. Your feed and insights will adapt around them.</p><div className="support-choice-grid">{supportOptions.map(({ id, label, icon: Icon }) => <button key={id} className={support.includes(id) ? "selected" : ""} onClick={() => toggle(id, support, setSupport)}><Icon size={21} /><span>{label}</span>{support.includes(id) && <Check size={16} />}</button>)}</div><p className="privacy-note"><Lock size={14} /> Your nutrition goals stay private by default.</p></>}
+      {step === 2 && <><p className="eyebrow">YOUR EVERYDAY</p><h1>Help us understand your routine.</h1><p className="onboarding-lead">This keeps recommendations realistic rather than perfect-on-paper.</p><div className="onboarding-section"><strong>Typical activity</strong><div className="segmented-choices">{[["light","Mostly light"],["moderate","Moderately active"],["high","Highly active"]].map(([id,label]) => <button key={id} className={activity === id ? "selected" : ""} onClick={() => setActivity(id)}>{label}</button>)}</div></div><div className="onboarding-section"><strong>Diet preferences <small>Optional</small></strong><div className="diet-choices">{["Vegetarian","Vegan","Halal","Gluten-free","Dairy-free","No preference"].map((item) => <button key={item} className={diets.includes(item) ? "selected" : ""} onClick={() => toggle(item, diets, setDiets)}>{item}{diets.includes(item) && <Check size={13} />}</button>)}</div></div></>}
+      {step === 3 && <><p className="eyebrow">YOUR STARTING POINT</p><h1>A simple plan built around you.</h1><p className="onboarding-lead">These are flexible starting estimates—not medical targets. Adjust them as you learn what works.</p><div className="goal-summary"><div className="summary-goal"><span><Target size={23} /></span><div><small>PRIMARY GOAL</small><strong>{selectedGoal?.label}</strong><p>{plan.rhythm}</p></div></div><div className="summary-targets"><span><small>DAILY ENERGY</small><strong>{plan.calories}</strong><b>{plan.calories === "Flexible" ? "goal range" : "kcal estimate"}</b></span><span><small>PROTEIN GUIDE</small><strong>{plan.protein}</strong><b>per day</b></span><span><small>ACTIVITY</small><strong>{activity === "high" ? "High" : activity === "light" ? "Light" : "Moderate"}</strong><b>typical pace</b></span></div><div className="summary-support"><small>VALE WILL PRIORITISE</small><div>{support.map((item) => <span key={item}><Check size={12} />{supportOptions.find((option) => option.id === item)?.label}</span>)}</div></div></div></>}
+    </div>
+    <footer>{step > 0 ? <button className="onboarding-back" onClick={() => setStep(step - 1)}>Back</button> : <span />}<span>Step {step + 1} of 4</span><button className="primary-button" disabled={!canContinue} onClick={() => step === 3 ? onSave(profile) : setStep(step + 1)}>{step === 3 ? "Save goals" : "Continue"}</button></footer>
+  </section></div>;
+}
 
 function MobileNav({ view, onView, onCreate }: { view: View; onView: (v: View) => void; onCreate: () => void }) {
   const mobileItems: { id: View; label: string; icon: typeof Home }[] = [
